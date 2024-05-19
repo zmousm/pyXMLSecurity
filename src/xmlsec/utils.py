@@ -16,6 +16,18 @@ import six
 import re
 from base64 import b64encode, standard_b64decode
 
+def load_pem_x509_cert_str_safe(data, *args, **kwargs):
+    """
+    Load a PEM-encoded X.509 certificate safely from a string or bytestring.
+
+    :param data: str or bytes: The PEM X.509 certificate data as a string or bytestring
+    :returns: A X.509 certificate object
+
+    *args and **kwargs are passed to load_pem_x509_certificate
+    """
+    if isinstance(data, six.text_type):
+        data = data.encode()
+    return load_pem_x509_certificate(data, *args, **kwargs)
 
 def parse_xml(data, remove_whitespace=True, remove_comments=True, schema=None):
     """
@@ -80,7 +92,7 @@ def pem2cert(pem):
     be used by new code.
     @param pem The certificate as pem string
     """
-    cert = load_pem_x509_certificate(pem, backend=default_backend())
+    cert = load_pem_x509_cert_str_safe(pem, backend=default_backend())
     return _cert2dict(cert)
 
 

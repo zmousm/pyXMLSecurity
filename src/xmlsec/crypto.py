@@ -15,6 +15,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding, ec
 from cryptography.x509 import load_pem_x509_certificate, load_der_x509_certificate, Certificate
+from xmlsec.utils import load_pem_x509_cert_str_safe
 from xmlsec.utils import sigvalue2dsssig, noop
 import base64
 
@@ -249,7 +250,7 @@ class XMLSecCryptoFromXML(XMlSecCrypto):
 
         super(XMLSecCryptoFromXML, self).__init__(source=source, do_padding=False, private=False, do_digest=False)
 
-        self.key = load_pem_x509_certificate(data, backend=default_backend())
+        self.key = load_pem_x509_cert_str_safe(data, backend=default_backend())
 
         # XXX now we could implement encrypted-PEM-support
         self.cert_pem = self.key.public_bytes(encoding=serialization.Encoding.PEM)
@@ -329,7 +330,7 @@ class CertDict(DictMixin):
         if isinstance(value, Certificate):
             self.certs[key] = value
         else:
-            self.certs[key] = load_pem_x509_certificate(value, backend=default_backend())
+            self.certs[key] = load_pem_x509_cert_str_safe(value, backend=default_backend())
 
     def __delitem__(self, key):
         del self.certs[key]
@@ -358,7 +359,7 @@ class CertDict(DictMixin):
 
 def _cert_fingerprint(cert_pem):
     if "-----BEGIN CERTIFICATE" in cert_pem:
-        cert = load_pem_x509_certificate(cert_pem, backend=default_backend())
+        cert = load_pem_x509_cert_str_safe(cert_pem, backend=default_backend())
     else:
         cert = load_der_x509_certificate(base64.standard_b64decode(cert_pem), backend=default_backend())
 
