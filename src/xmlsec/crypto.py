@@ -8,12 +8,12 @@ import sys
 from six.moves import xrange
 from xmlsec import constants
 from binascii import hexlify
-from xmlsec.exceptions import XMLSigException
+from xmlsec.exceptions import XMLSigException, XMLSigAlgoKeyTypeException
 from xmlsec.utils import unicode_to_bytes
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import padding, ec
+from cryptography.hazmat.primitives.asymmetric import padding, ec, rsa
 from cryptography.x509 import load_pem_x509_certificate, load_der_x509_certificate, Certificate
 from xmlsec.utils import load_pem_x509_cert_str_safe
 from xmlsec.utils import sigvalue2dsssig, noop
@@ -149,6 +149,17 @@ class XMlSecCrypto(object):
 
         raise XMLSigException("Unable to determine padder for '{}'".format(sig_alg))
 
+    def verify_match_sig_alg_key(self, sig_alg):
+        if 'rsa-' in sig_alg or sig_alg == 'mgf1':
+            required_key_type = rsa.RSAPublicKey
+        elif sig_alg.startswith('ecdsa-'):
+            required_key_type = ec.EllipticCurvePublicKey
+        else:
+            raise XMLSigAlgoKeyTypeException("Can not match signature algorithm '{}' to a key type".format(sig_alg))
+        if not isinstance(self.key.public_key(), required_key_type):
+            raise XMLSigAlgoKeyTypeException("Key type mismatch {} vs. signature algorithm {}".format(
+                type(self.key.public_key()), sig_alg))
+
     def sign(self, data, sig_uri, parameters=None):
         if self.is_private:
             if not isinstance(data, six.binary_type):
@@ -165,6 +176,7 @@ class XMlSecCrypto(object):
                 msg = unicode_to_bytes(msg)
             try:
                 sig_alg = constants.sign_alg_xmldsig_sig_to_sigalg(sig_uri)
+                self.verify_match_sig_alg_key(sig_alg)
                 scheme, encoder, decoder = self.parse_sig_scheme(sig_alg, parameters=parameters)
                 self.key.public_key().verify(decoder(signature), msg, *scheme)
             except InvalidSignature:
