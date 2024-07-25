@@ -13,7 +13,7 @@ version = '1.0.0'
 
 install_requires = [
     'defusedxml', 'lxml',
-    'pyconfig @ git+https://github.com/zmousm/pyconfig.git@c5efae9d1e0315e570ffc96143beb6a551a4f4db#egg=pyconfig',
+    'pyconfig @ git+https://github.com/shakefu/pyconfig.git@c5efae9d1e0315e570ffc96143beb6a551a4f4db#egg=pyconfig',
     'requests', 'cryptography', 'six'
 ]
 
